@@ -72,7 +72,8 @@ public class EquipamentoRepository implements Repository<Equipamento, Long> {
             while (resultSet.next()){
                 Long id = resultSet.getLong("ID_EQUIPAMENTO");
                 String nome = resultSet.getString("NM_EQUIPAMENTO");
-                equipamentos.add(new Equipamento(id, nome,  ));
+                String descricao = resultSet.getString("NM_DESCRICAO");
+                equipamentos.add(new Equipamento(id, nome, descricao ));
             }
         }
 
@@ -88,7 +89,7 @@ public class EquipamentoRepository implements Repository<Equipamento, Long> {
     }
 
     @Override
-    public Equipamento findById(Long aLong) {
+    public Equipamento findById(Long id) {
         Equipamento equipamento = null;
         var sql = "SELECT * FROM equipamento where ID_EQUIPAMENTO=?";
 
@@ -104,11 +105,11 @@ public class EquipamentoRepository implements Repository<Equipamento, Long> {
                     equipamento = new Equipamento(
                             resultSet.getLong("ID_EQUIPAMENTO"),
                             resultSet.getString("NM_EQUIPAMENTO"),
-                            resultSet.
+                            resultSet.getString("NM_DESCRICAO")
                     );
                 }
             }else{
-                System.err.println("Equipamentos não encontradado com o id = " + id);
+                System.out.println("Equipamentos não encontradado com o id = " + id);
             }
             resultSet.close();
             preparedStatement.close();
@@ -118,16 +119,49 @@ public class EquipamentoRepository implements Repository<Equipamento, Long> {
         }
 
         return equipamento;
-
     }
 
     @Override
     public Equipamento update(Equipamento equipamento) {
+
+            PreparedStatement ps = null;
+
+        var sql = "UPDATE equipamento SET NM_EQUIPAMENTO = ? where ID_EQUIPAMENENTO=?";
+
+        ConnectionFactory factory = ConnectionFactory.build();
+        Connection connection = factory.getConnection();
+
+        try{
+            ps = connection.prepareStatement(sql);
+            ps.setString(1, equipamento.getNome());
+            ps.setLong(2, equipamento.getId());
+            int itensAtualizados = ps.executeUpdate();
+
+            ps.close();
+            connection.close();
+            if (itensAtualizados > 0) return findById(equipamento.getId());
+        }catch (SQLException e){
+            throw new RuntimeException(e);
+        }
         return null;
     }
 
     @Override
     public boolean delete(Long id) {
+        PreparedStatement ps = null;
+        var sql = "DELETE from equipamento where ID_EQUIPAMENTO";
+        ConnectionFactory factory = ConnectionFactory.build();
+        Connection connection = factory.getConnection();
+        try {
+            ps = connection.prepareStatement(sql);
+            ps.setLong(1, id);
+            int itensRemovidos = ps.executeUpdate();
+            ps.close();
+            connection.close();
+            if (itensRemovidos > 0 ) return true;
+        }catch (SQLException e){
+            throw new RuntimeException(e);
+        }
         return false;
     }
 }
